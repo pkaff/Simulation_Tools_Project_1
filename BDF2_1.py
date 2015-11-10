@@ -11,7 +11,7 @@ class BDF_2(Explicit_ODE):
     maxit=100
     maxsteps = 100000
     
-    def integrate(self, t, y, tf, opts):
+    '''def integrate(self, t, y, tf, opts):
         """
         _integrates (t,y) values until t > tf
         """
@@ -26,21 +26,58 @@ class BDF_2(Explicit_ODE):
         
         t_nm1 = 0 # making sure these are defined for first iterations
         y_nm1 = 0
-        print('hej')
         for i in range(self.maxsteps):
             if t >= tf:
                 break
             if i==0:  # initial step
                 t_np1,y_np1 = self.step_EE(t,y)
-                print('hej2')
             elif i == 1:
                 t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
-                print('hej3')
             else:   
                 t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
-                print('hej4')
             t, t_nm1, t_nm2 = t_np1, t, t_nm1
             y, y_nm1, y_nm2 = y_np1, y, y_nm1
+            print('t = ', t, ', y = ', y)
+            tlist.append(t)
+            ylist.append(y)
+    
+            self.h=min(self.h,N.abs(tf-t))
+        else:
+            raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
+        self.h = N.diff(opts["output_list"])[0]
+        
+        return 3, tlist, ylist'''
+
+    def integrate(self, t, y, tf, opts):
+        """
+        _integrates (t,y) values until t > tf
+        """
+        if opts["output_list"] == None:
+            raise Explicit_ODE_Exception('BDF-2 is a fixed step-size method. Provide' \
+                                         ' the number of communication points.')
+        
+        self.h = N.diff(opts["output_list"])[0]
+        
+        tlist = []
+        ylist = []
+        
+        t_nm1 = 0 # making sure these are defined for first iterations
+        t_nm2 = 0
+        y_nm1 = 0
+        y_nm2 = 0
+        for i in range(self.maxsteps):
+            if t >= tf:
+                break
+            if i==0:  # initial step
+                t_np1,y_np1 = self.step_EE(t,y)
+            elif i == 1:
+                t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
+            elif i == 2:
+                t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
+            else:
+                t_np1, y_np1 = self.step_BDF4([t,t_nm1, t_nm2, t_nm3], [y,y_nm1, y_nm2, y_nm3])    
+            t, t_nm1, t_nm2, t_nm3 = t_np1, t, t_nm1, t_nm2
+            y, y_nm1, y_nm2, y_nm3 = y_np1, y, y_nm1, y_nm2
             print('t = ', t, ', y = ', y)
             tlist.append(t)
             ylist.append(y)
@@ -101,7 +138,28 @@ class BDF_2(Explicit_ODE):
         y_np1_i=y_n   # zero order predictor
         # corrector with fixed point iteration
         def g(y_np1):
-            return y_np1 - 18*y_n/11 + 9*y_nm1/11 - 2*y_nm2/11 - 6*h*f(t_np1, y_np1)
+            return alpha[0]*y_np1 + alpha[1]*y_n + alpha[2]*y_nm1 + alpha[3]*y_nm2 - h*f(t_np1, y_np1)
+        y_np1_ip1 = so.fsolve(g, y_np1_i)
+        return t_np1, y_np1_ip1
+
+    def step_BDF4(self,T,Y):
+        """
+        BDF-2 with Fixed Point Iteration and Zero order predictor
+        
+        alpha_0*y_np1+alpha_1*y_n+alpha_2*y_nm1=h f(t_np1,y_np1)
+        alpha=[3/2,-2,1/2]
+        """
+        alpha = [25/12, -48/12, 36/12, -16/12, 3/12]
+        f=self.problem.rhs
+        h=self.h
+        t_n, t_nm1, tnm2, t_nm3 = T
+        y_n, y_nm1, y_nm2, y_nm3 = Y
+        # predictor
+        t_np1=t_n+h
+        y_np1_i=y_n   # zero order predictor
+        # corrector with fixed point iteration
+        def g(y_np1):
+            return alpha[0]*y_np1 + alpha[1]*y_n + alpha[2]*y_nm1 + alpha[3]*y_nm2 + alpha[4]*y_nm3 - h*f(t_np1, y_np1)
         y_np1_ip1 = so.fsolve(g, y_np1_i)
         return t_np1, y_np1_ip1
 
@@ -114,7 +172,7 @@ class BDF_2(Explicit_ODE):
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
             
 
-#TEST EXAMPLE
+'''#TEST EXAMPLE
 def pend(t,y):
     #g=9.81    l=0.7134354980239037
     gl=13.7503671
@@ -135,4 +193,52 @@ t,y = exp_sim.simulate(1.0, 10)
 
 #Plot the result
 P.plot(t,y)
-P.show()
+P.show()'''
+
+def lambda_func(y1, y2, k = 20):
+    return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
+
+#the right hand side of our problem
+def rhs(t, y):
+    return np.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
+
+#initial values. y[0] = x-position, y[1] = y-position, y[2] = x-velocity, y[3] = y-velocity
+y0 = N.array([1.5, 0.0, 0.0, 0.0])
+t0 = 0.0
+
+#Assimulo stuff
+model = Explicit_Problem(rhs, y0, t0)
+model.name = 'Task 1'
+sim = BDF_2(model)
+#sim.atol = 0.1
+#sim.rtol = 0.1
+#sim.maxord = 1
+#sim.maxh = 0.01
+#sim.minh = 0.01
+#sim = CVode(model)
+tfinal = 20
+#simulation. Store result in t and y
+t, y = sim.simulate(tfinal)
+
+#Create plots. Three figures are created: one containing positional values as a function of time, one with velocities as a function of time and the last traces the pendulum's movement (x and y coordinates in cartesian coordinate)
+fig, ax = plt.subplots()
+ax.plot(t, y[:, 0], label='x-pos')
+ax.plot(t, y[:, 1], label='y-pos')
+legend = ax.legend(loc='upper center', shadow=True)
+plt.grid()
+
+plt.figure(1)
+fig2, ax2 = plt.subplots()
+ax2.plot(t, y[:, 2], label='x-vel')
+ax2.plot(t, y[:, 3], label='y-vel')
+legend = ax2.legend(loc='upper center', shadow=True)
+plt.grid()
+
+plt.figure(1)
+fig3, ax3 = plt.subplots()
+ax3.plot(y[:, 0], y[:, 1], label='displacement')
+legend = ax3.legend(loc='upper center', shadow=True)
+plt.grid()
+
+# Now add the legend with some customizations.
+plt.show()
