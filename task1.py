@@ -4,6 +4,7 @@ import pylab as pl
 import matplotlib.pyplot as plt
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
+from BDF2 import BDF_2
 
 def lambda_func(y1, y2, k = 1):
     return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
@@ -16,7 +17,8 @@ t0 = 0.0
 
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = CVode(model)
+sim = BDF_2(model)
+#sim = CVode(model)
 sim.maxord = 7
 tfinal = 100.0
 t, y = sim.simulate(tfinal)
