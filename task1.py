@@ -4,10 +4,10 @@ import pylab as pl
 import matplotlib.pyplot as plt
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
-from BDF2 import BDF_2
 
 #lambda(y1, y2, k)
-def lambda_func(y1, y2, k = -0.1):
+
+def lambda_func(y1, y2, k = 10):
     return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -15,7 +15,7 @@ def rhs(t, y):
     return np.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
 
 #initial values. y[0] = x-position, y[1] = y-position, y[2] = x-velocity, y[3] = y-velocity
-y0 = np.array([1.0, 0.0, 0.0, 0.0])
+y0 = np.array([1.2, 0.0, 0.0, 0.0])
 t0 = 0.0
 
 #Assimulo stuff
@@ -23,7 +23,7 @@ model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
 sim = CVode(model)
 #sim = CVode(model)
-tfinal = 3
+tfinal = 20
 #simulation. Store result in t and y
 t, y = sim.simulate(tfinal)
 
