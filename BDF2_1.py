@@ -1,6 +1,7 @@
 from assimulo.explicit_ode import *
 import numpy as N
 import scipy.linalg as SL
+import scipy.optimize as so
 
 class BDF_2(Explicit_ODE):
     """
@@ -23,19 +24,27 @@ class BDF_2(Explicit_ODE):
         tlist = []
         ylist = []
         
+        t_nm1 = 0 # making sure these are defined for first iterations
+        y_nm1 = 0
+        print('hej')
         for i in range(self.maxsteps):
             if t >= tf:
                 break
             if i==0:  # initial step
                 t_np1,y_np1 = self.step_EE(t,y)
-            else:   
+                print('hej2')
+            elif i == 1:
                 t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
-            t,t_nm1=t_np1,t
-            y,y_nm1=y_np1,y
-            
+                print('hej3')
+            else:   
+                t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
+                print('hej4')
+            t, t_nm1, t_nm2 = t_np1, t, t_nm1
+            y, y_nm1, y_nm2 = y_np1, y, y_nm1
+            print('t = ', t, ', y = ', y)
             tlist.append(t)
             ylist.append(y)
-            
+    
             self.h=min(self.h,N.abs(tf-t))
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
@@ -74,6 +83,28 @@ class BDF_2(Explicit_ODE):
             y_np1_i=y_np1_ip1
         else:
             raise Explicit_ODE_Exception('Corrector could not converge within % iterations'%i)
+
+    def step_BDF3(self,T,Y):
+        """
+        BDF-2 with Fixed Point Iteration and Zero order predictor
+        
+        alpha_0*y_np1+alpha_1*y_n+alpha_2*y_nm1=h f(t_np1,y_np1)
+        alpha=[3/2,-2,1/2]
+        """
+        alpha = [11/6, -18/6, 9/6, -2/6]
+        f=self.problem.rhs
+        h=self.h
+        t_n,t_nm1,tnm2=T
+        y_n,y_nm1,y_nm2=Y
+        # predictor
+        t_np1=t_n+h
+        y_np1_i=y_n   # zero order predictor
+        # corrector with fixed point iteration
+        def g(y_np1):
+            return y_np1 - 18*y_n/11 + 9*y_nm1/11 - 2*y_nm2/11 - 6*h*f(t_np1, y_np1)
+        y_np1_ip1 = so.fsolve(g, y_np1_i)
+        return t_np1, y_np1_ip1
+
             
     def print_statistics(self, verbose=NORMAL):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
