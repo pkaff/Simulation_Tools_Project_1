@@ -13,8 +13,8 @@ class TestSpline(unittest.TestCase):
         y0 = 1
         t0 = 0
         tf = 1
-        bdf = BDF_2(rhs, 3)
-        t,y = integrate(t0, y0, tf, 0.001)
+        bdf = BDF_2(rhs, y0, t0, 3)
+        t,y = bdf.integrate(t0, y0, tf, 0.001)
         res = 5*(1 - math.exp(-0.2))
 
         self.assertAlmostEqual(y(-1), res)
@@ -26,7 +26,7 @@ class TestSpline(unittest.TestCase):
         y0 = 1
         t0 = 0
         tf = 1
-        bdf = BDF_3(rhs, 4)
+        bdf = BDF_2(rhs, y0, t0)
         t,y = integrate(t0, y0, tf, 0.001)
         res = 5*(1 - math.exp(-0.2))
 
