@@ -8,12 +8,14 @@ class BDF_2(Explicit_ODE):
     """
     Explicit Euler.
     """
-    Tol=1.e-8
-    maxit=100
-    maxsteps = 100000
 
-    # 1 - Explicit Euler, 2 - BDF2, 3 - BDF3, 4 - BDF4
-    method_order = 4
+    # order: 1 - Explicit Euler, 2 - BDF2, 3 - BDF3, 4 - BDF4
+    def __init__(self, order = 4, tol = 1.e-8, maxit = 100, maxsteps = 100000):
+        self.method_order = order
+        self.Tol = tol
+        self.maxit = maxit
+        self.maxsteps = maxsteps
+
 
     def integrate(self, t, y, tf, opts):
         """
