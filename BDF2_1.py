@@ -10,7 +10,8 @@ class BDF_2(Explicit_ODE):
     """
 
     # order: 1 - Explicit Euler, 2 - BDF2, 3 - BDF3, 4 - BDF4
-    def __init__(self, order = 4, tol = 1.e-8, maxit = 100, maxsteps = 100000):
+    def __init__(self, rhs, y0, t0, order = 4, tol = 1.e-8, maxit = 100, maxsteps = 100000):
+        super().__init__(rhs, y0, t0)
         self.method_order = order
         self.Tol = tol
         self.maxit = maxit
