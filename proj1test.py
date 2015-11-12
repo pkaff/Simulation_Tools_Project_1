@@ -13,7 +13,7 @@ class TestSpline(unittest.TestCase):
         y0 = 1
         t0 = 0
         tf = 1
-        bdf = BDF_3(rhs)
+        bdf = BDF_2(rhs)
         t,y = integrate(t0, y0, tf, 0.001)
         res = 5*(1 - math.exp(-0.2))
 
