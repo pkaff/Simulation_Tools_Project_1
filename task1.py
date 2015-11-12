@@ -7,7 +7,7 @@ from assimulo.solvers import CVode
 
 #lambda(y1, y2, k)
 
-def lambda_func(y1, y2, k = 10):
+def lambda_func(y1, y2, k = 50):
     return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -25,9 +25,10 @@ sim = CVode(model)
 #sim.atol = 0.1
 sim.rtol = 0.1
 #sim.maxord = 1
-#sim.maxh = 0.01
-#sim.minh = 0.01
+#sim.maxh = 0.2
+#sim.minh = 0.001
 #sim = CVode(model)
+#sim.discr = 'Adams'
 tfinal = 20
 #simulation. Store result in t and y
 t, y = sim.simulate(tfinal)
