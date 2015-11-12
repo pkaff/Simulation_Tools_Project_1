@@ -17,7 +17,7 @@ class TestSpline(unittest.TestCase):
         t,y = integrate(t0, y0, tf, 0.001)
         res = 5*(1 - math.exp(-0.2))
 
-        self.assertAlmostEqual(y, res)
+        self.assertAlmostEqual(y(-1), res)
 
 if __name__ == '__main__':
     unittest.main()
