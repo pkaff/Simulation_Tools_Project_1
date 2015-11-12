@@ -2,6 +2,7 @@ from assimulo.explicit_ode import *
 import numpy as N
 import scipy.linalg as SL
 import scipy.optimize as so
+import matplotlib.pyplot as plt
 
 class BDF_2(Explicit_ODE):
     """
@@ -10,43 +11,9 @@ class BDF_2(Explicit_ODE):
     Tol=1.e-8
     maxit=100
     maxsteps = 100000
-    
-    '''def integrate(self, t, y, tf, opts):
-        """
-        _integrates (t,y) values until t > tf
-        """
-        if opts["output_list"] == None:
-            raise Explicit_ODE_Exception('BDF-2 is a fixed step-size method. Provide' \
-                                         ' the number of communication points.')
-        
-        self.h = N.diff(opts["output_list"])[0]
-        
-        tlist = []
-        ylist = []
-        
-        t_nm1 = 0 # making sure these are defined for first iterations
-        y_nm1 = 0
-        for i in range(self.maxsteps):
-            if t >= tf:
-                break
-            if i==0:  # initial step
-                t_np1,y_np1 = self.step_EE(t,y)
-            elif i == 1:
-                t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
-            else:   
-                t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
-            t, t_nm1, t_nm2 = t_np1, t, t_nm1
-            y, y_nm1, y_nm2 = y_np1, y, y_nm1
-            print('t = ', t, ', y = ', y)
-            tlist.append(t)
-            ylist.append(y)
-    
-            self.h=min(self.h,N.abs(tf-t))
-        else:
-            raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
-        self.h = N.diff(opts["output_list"])[0]
-        
-        return 3, tlist, ylist'''
+
+    # 1 - Explicit Euler, 2 - BDF2, 3 - BDF3, 4 - BDF4
+    method_order = 4
 
     def integrate(self, t, y, tf, opts):
         """
@@ -55,6 +22,8 @@ class BDF_2(Explicit_ODE):
         if opts["output_list"] == None:
             raise Explicit_ODE_Exception('BDF-2 is a fixed step-size method. Provide' \
                                          ' the number of communication points.')
+        if self.method_order < 1 or self.method_order > 4:
+            raise Explicit_ODE_Exception('Method order must be between 1 and 4 (inclusive)')
         
         self.h = N.diff(opts["output_list"])[0]
         
@@ -68,17 +37,16 @@ class BDF_2(Explicit_ODE):
         for i in range(self.maxsteps):
             if t >= tf:
                 break
-            if i==0:  # initial step
+            if i==0 or self.method_order == 1:  # initial step
                 t_np1,y_np1 = self.step_EE(t,y)
-            elif i == 1:
+            elif i == 1 or self.method_order == 2:
                 t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
-            elif i == 2:
+            elif i == 2 or self.method_order == 3:
                 t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
-            else:
+            elif self.method_order == 4:
                 t_np1, y_np1 = self.step_BDF4([t,t_nm1, t_nm2, t_nm3], [y,y_nm1, y_nm2, y_nm3])    
             t, t_nm1, t_nm2, t_nm3 = t_np1, t, t_nm1, t_nm2
             y, y_nm1, y_nm2, y_nm3 = y_np1, y, y_nm1, y_nm2
-            print('t = ', t, ', y = ', y)
             tlist.append(t)
             ylist.append(y)
     
@@ -123,10 +91,7 @@ class BDF_2(Explicit_ODE):
 
     def step_BDF3(self,T,Y):
         """
-        BDF-2 with Fixed Point Iteration and Zero order predictor
-        
-        alpha_0*y_np1+alpha_1*y_n+alpha_2*y_nm1=h f(t_np1,y_np1)
-        alpha=[3/2,-2,1/2]
+        BDF-3 with fsolve
         """
         alpha = [11/6, -18/6, 9/6, -2/6]
         f=self.problem.rhs
@@ -144,10 +109,7 @@ class BDF_2(Explicit_ODE):
 
     def step_BDF4(self,T,Y):
         """
-        BDF-2 with Fixed Point Iteration and Zero order predictor
-        
-        alpha_0*y_np1+alpha_1*y_n+alpha_2*y_nm1=h f(t_np1,y_np1)
-        alpha=[3/2,-2,1/2]
+        BDF-4 with fsolve
         """
         alpha = [25/12, -48/12, 36/12, -16/12, 3/12]
         f=self.problem.rhs
@@ -179,7 +141,7 @@ def pend(t,y):
     return N.array([y[1],-gl*N.sin(y[0])])
 
 #Initial conditions
-y0=N.array([2.*N.pi,0.])    
+y0=N.array([0.5*N.pi,0.])    
 
 #Specify an explicit problem
 pend_mod=Explicit_Problem(pend, y0)
@@ -196,20 +158,21 @@ P.plot(t,y)
 P.show()'''
 
 def lambda_func(y1, y2, k = 20):
-    return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
+    return k*(N.sqrt(y1**2 + y2**2) - 1)/N.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
 def rhs(t, y):
-    return np.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
+    return N.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
 
 #initial values. y[0] = x-position, y[1] = y-position, y[2] = x-velocity, y[3] = y-velocity
-y0 = N.array([1.5, 0.0, 0.0, 0.0])
+y0 = N.array([1.4, 0.0, 0.0, 0.0])
 t0 = 0.0
 
 #Assimulo stuff
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
 sim = BDF_2(model)
+sim.method_order = 4
 #sim.atol = 0.1
 #sim.rtol = 0.1
 #sim.maxord = 1
@@ -218,7 +181,8 @@ sim = BDF_2(model)
 #sim = CVode(model)
 tfinal = 20
 #simulation. Store result in t and y
-t, y = sim.simulate(tfinal)
+n_steps = 1000
+t, y = sim.simulate(tfinal, n_steps)
 
 #Create plots. Three figures are created: one containing positional values as a function of time, one with velocities as a function of time and the last traces the pendulum's movement (x and y coordinates in cartesian coordinate)
 fig, ax = plt.subplots()
