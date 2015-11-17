@@ -29,34 +29,31 @@ class BDF_2(Explicit_ODE):
             raise Explicit_ODE_Exception('Method order must be between 1 and 4 (inclusive)')
         
         self.h = N.diff(opts["output_list"])[0]
-        
         tlist = []
         ylist = []
         
-        t_nm1 = 0 # making sure these are defined for first iterations
-        t_nm2 = 0
-        y_nm1 = 0
-        y_nm2 = 0
+        # T = [t_n, t_nm1, t_nm2, t_nm3]
+        T = [t, t, t, t]
+        Y = [y, y, y, y]
         for i in range(self.maxsteps):
-            if t >= tf:
+            if T[0] >= tf:
                 break
-            if i==0 or self.method_order == 1:  # initial step
-                t_np1,y_np1 = self.step_EE(t,y)
+            if i == 0 or self.method_order == 1:  # initial step
+                t_np1, y_np1 = self.step_EE(T[0], Y[0])
             elif i == 1 or self.method_order == 2:
-                t_np1, y_np1 = self.step_BDF2([t,t_nm1], [y,y_nm1])
+                t_np1, y_np1 = self.step_BDF2(T[:2], Y[:2])
             elif i == 2 or self.method_order == 3:
-                t_np1, y_np1 = self.step_BDF3([t,t_nm1, t_nm2], [y,y_nm1, y_nm2])
+                t_np1, y_np1 = self.step_BDF3(T[:3], Y[:3])
             elif self.method_order == 4:
-                t_np1, y_np1 = self.step_BDF4([t,t_nm1, t_nm2, t_nm3], [y,y_nm1, y_nm2, y_nm3])    
-            t, t_nm1, t_nm2, t_nm3 = t_np1, t, t_nm1, t_nm2
-            y, y_nm1, y_nm2, y_nm3 = y_np1, y, y_nm1, y_nm2
-            tlist.append(t)
-            ylist.append(y)
-    
-            self.h=min(self.h,N.abs(tf-t))
+                t_np1, y_np1 = self.step_BDF4(T, Y)
+            T = [t_np1] + T[:-1]
+            Y = [y_np1] + Y[:-1]
+            tlist.append(T[0])
+            ylist.append(Y[0])
+            self.h = min(self.h, N.abs(tf-t))
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
-        self.h = N.diff(opts["output_list"])[0]
+        #self.h = N.diff(opts["output_list"])[0]
         
         return 3, tlist, ylist
     
@@ -92,42 +89,33 @@ class BDF_2(Explicit_ODE):
         else:
             raise Explicit_ODE_Exception('Corrector could not converge within % iterations'%i)
 
+    def step_BDFn(self, T, Y, n, alpha):
+        """
+        Performs a BDF step of order n
+        """
+        f = self.problem.rhs
+        h = self.h
+        # predictor
+        t_np1 = T[0] + h
+        y_np1_i = Y[0] # zero order predictor
+        def g(y_np1):
+            return alpha[0]*y_np1 + sum([alpha[i+1]*Y[i] for i in range(n)]) - h*f(t_np1, y_np1)
+        y_np1 = so.fsolve(g, y_np1_i)
+        return t_np1, y_np1
+
     def step_BDF3(self,T,Y):
         """
         BDF-3 with fsolve
         """
         alpha = [11/6, -18/6, 9/6, -2/6]
-        f=self.problem.rhs
-        h=self.h
-        t_n,t_nm1,tnm2=T
-        y_n,y_nm1,y_nm2=Y
-        # predictor
-        t_np1=t_n+h
-        y_np1_i=y_n   # zero order predictor
-        # corrector with fixed point iteration
-        def g(y_np1):
-            return alpha[0]*y_np1 + alpha[1]*y_n + alpha[2]*y_nm1 + alpha[3]*y_nm2 - h*f(t_np1, y_np1)
-        y_np1_ip1 = so.fsolve(g, y_np1_i)
-        return t_np1, y_np1_ip1
+        return self.step_BDFn(T, Y, 3, alpha)
 
     def step_BDF4(self,T,Y):
         """
         BDF-4 with fsolve
         """
         alpha = [25/12, -48/12, 36/12, -16/12, 3/12]
-        f=self.problem.rhs
-        h=self.h
-        t_n, t_nm1, tnm2, t_nm3 = T
-        y_n, y_nm1, y_nm2, y_nm3 = Y
-        # predictor
-        t_np1=t_n+h
-        y_np1_i=y_n   # zero order predictor
-        # corrector with fixed point iteration
-        def g(y_np1):
-            return alpha[0]*y_np1 + alpha[1]*y_n + alpha[2]*y_nm1 + alpha[3]*y_nm2 + alpha[4]*y_nm3 - h*f(t_np1, y_np1)
-        y_np1_ip1 = so.fsolve(g, y_np1_i)
-        return t_np1, y_np1_ip1
-
+        return self.step_BDFn(T, Y, 4, alpha)
             
     def print_statistics(self, verbose=NORMAL):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
@@ -135,13 +123,6 @@ class BDF_2(Explicit_ODE):
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : BDF2',                       verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
-
-#Simulate the problem
-t,y = exp_sim.simulate(1.0, 10)
-
-#Plot the result
-P.plot(t,y)
-P.show()'''
 
 def lambda_func(y1, y2, k = 10):
     return k*(N.sqrt(y1**2 + y2**2) - 1)/N.sqrt(y1**2 + y2**2)
@@ -155,9 +136,9 @@ y0 = N.array([1.2, 0.0, 0.0, 0.0])
 t0 = 0.0
 
 #Assimulo stuff
-model = Explicit_Problem(rhs)
+model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = BDF_2(model, 2)
+sim = BDF_2(model, 1)
 #sim.atol = 0.1
 #sim.rtol = 0.1
 #sim.maxord = 1
