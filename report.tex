@@ -4,6 +4,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
+\usepackage{xcolor}
 
 \renewcommand\familydefault{\sfdefault}
 \usepackage{tgheros}
@@ -105,7 +106,7 @@ As a part of the course Simulation Tools, FMNN05, at LTH there are three project
 
 Every project is divided into smaller tasks. We will present each task followed by its results one by one. This is the report for project 1.
 
-\section*{Task 1}
+\section{The elastic pendulum problem}
 Task 1 consisted of a model for an elastic pendulum given by the following ODE
 \begin{align}
 & \dot{y_1} = y_3 \\
@@ -244,14 +245,49 @@ We can see that the spring is very elastic in figure \ref{3k075} since the pendu
 
 With a initial elongation of the spring we would expect the y-values to become more irregular since the spring is oscillating around its equilibrium.
 
-\section*{Task 2}
-Our implementations of BDF-4 and BDF-3 can be seen below:
+\section{BDF3 and BDF4}
+Our implementations of BDF-4 and BDF-3 can be seen in Listings \ref{BDF3} and \ref{BDF4}.
 
+\begin{lstlisting}[caption = Python implementation of BDF3, label = BDF3]
+    def step_BDF3(self,T,Y):
+        """
+        BDF-3 with fsolve
+        """
+        alpha = [11/6, -18/6, 9/6, -2/6]
+        return self.step_BDFn(T, Y, 3, alpha)
+\end{lstlisting}
 
-\section*{Task 3}
+\begin{lstlisting}[caption = Python implementation of BDF4, label = BDF4]
+    def step_BDF4(self,T,Y):
+        """
+        BDF-4 with fsolve
+        """
+        alpha = [25/12, -48/12, 36/12, -16/12, 3/12]
+        return self.step_BDFn(T, Y, 4, alpha)
+\end{lstlisting}
+
+Both of these use the function BDFn, which can be seen in Listing \ref{BDFn}.
+
+\begin{lstlisting}[caption = Auxiliary function BDFn, label = BDFn]
+    def step_BDFn(self, T, Y, n, alpha):
+        """
+        Performs a BDF step of order n
+        """
+        f = self.problem.rhs
+        h = self.h
+        # predictor
+        t_np1 = T[0] + h
+        y_np1_i = Y[0] # zero order predictor
+        def g(y_np1):
+            return alpha[0]*y_np1 + sum([alpha[i+1]*Y[i] for i in range(n)]) - h*f(t_np1, y_np1)
+        y_np1 = so.fsolve(g, y_np1_i)
+        return t_np1, y_np1
+\end{lstlisting}
+
+\section{Assimulo testing for various frequencies using a BDF solver}
 %insert experiments with different methods
 
-\section*{Task 4}
+\section{Assimulo testing using CVode}
 Now we repeat the experiments from task 3 using the solver CVode again. We also test the influence of ATOL, RTOL, MAXORD and the choice of discretization on the performance for the low and highly oscillating case.
 
 \subsection*{Low oscillation}
@@ -317,53 +353,52 @@ The maximum order still only affects the number of steps. The highly oscillating
 \subsubsection*{Choice of discretization}
 
 
-\section*{Task 5} 
-%DYMOLA MODELLICA
-\begin{tabular}{| l | c | c |}
+\section{Comparison of Assimulo and Dymola}
+In this section we will examine the possibilities to simulate the pendulum in Dymola. We will especially consider different integrators and compare them when run in Assimulo and in Dymola. The number of steps that the integrator uses gives us an idea of how large steps the method is taking, thus also how fast the method might be running. Though the actual time consumed in each step is in the function evaluations. Each step does a number of function evaluations, and if a method uses many evaluations it might be less efficient than a method with more steps but fewer evaluations. In the table below our results can be viewed:
+
+\begin{table}
+\begin{tabular}{|c|c|c|}
 \hline
- Method \textbackslash \, Program & Assimulo & Dymola \\ \hline
- & \begin{tabular}{c | c | c | c}
-  steps & calls & J-eval & nonlinear
- \end{tabular}
- & \begin{tabular}{c | c | c | c}
-  steps & calls & J-eval & nonlinear
- \end{tabular} \\ \hline
- Euler & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular}
-  & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular} \\ \hline
- BDF2 & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular}
- & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular} \\ \hline
- BDF3 & \begin{tabular}{c | c | c | c}
-  1 & Van Slooten & 1 & 1
- \end{tabular}
- & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular} \\ \hline
- BDF4 & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular}
- & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular} \\ \hline
- CVODE & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular}
- & \begin{tabular}{c | c | c | c}
-  1 & 1 & 1 & 1
- \end{tabular} \\ \hline
- 
+Method \textbackslash \, Program & Assimulo & Dymola  \\ \hline
+\begin{tabular}{c}
+\\
+Explicit Euler \\ 
+Dopri45 \\
+CVode \\ 
+Lsodar \\
 \end{tabular}
+& \begin{tabular}{c|c|c|c}
+steps & calls & J-eval & nonlinear \\ \hline
+2000 & 2000 & 0 & 0 \\ \hline
+201 & 1208 & 0 & 0 \\ \hline
+536 & 580 & 9 & 576 \\ \hline
+362 & 747 & 0 & 0 
+\end{tabular}
+& \begin{tabular}{c|c|c|c}
+steps & calls & J-eval & nonlinear \\ \hline
+500 & 500 & 0 & 0 \\ \hline
+193 & 1155 & 0 & 0 \\ \hline
+544 & 585 & 10 & 581 \\ \hline
+362 & 747 & 0 & 0 
+\end{tabular}
+\\ \hline
+\end{tabular}
+\caption{An overview of statistics for some methods present in both Assimulo and Dymola. Standard values used: $x = 1.2$, $k = 10$, $tol = 1e-6$ and $t=0..20$.}%A comparison of the number of steps taken, function calls, Jacobian evaluations and nonlinear iterations across a few methods present in both Assimulo and Dymola
+\label{DymolaStatistics}
+\end{table}
 
-%x = 1.2, k = 10, Atol = 1e-6, Rtol = 1e-6
+As seen in table \ref{DymolaStatistics} the Explicit Euler isn't affected by whether we're using Assimulo or Dymola (the step size is 4 times smaller by default in Assimulo). 
 
-\section*{Task 6}
+The Dopri45 integrator on the other hand differs a bit. To start with we can see that this integrator is a 4-5 step method since we have about 6 times as many function evaluations as steps (each step samples the right-hand side at 5 points, the 4th in two distinct ways). The deviations from the multiplicity are as a result of failed steps where we had to do another evaluation with some changes to succeed. For this method Dymola is a bit more efficient (fewer steps), compared to Assimulo.
+
+Looking at the CVode integrator we can see that, compared to Dopri45, we have much fewer function evaluations. This is as a result of CVode being a one-step method (thus having almost the same amount of function calls as steps). The price we pay for having a one-step method on the other hand is the number of Jacobian evaluations and number of non-linear iterations. Our theory is that steps will more often fail when using a one-step method than when using a multi-step method. This time though Assimulo is more efficient than Dymola.
+
+The last method considered is Lsodar. This seems to be a 2-step method and this time we do not get punished by having to take new Jacobian evaluations, as with CVode. The number of function calls surpasses the number used in CVode though. Using this integrator we have no difference in number of steps and function calls in Assimulo and Dymola.
+
+On a particular machine we had the same CPU-time for CVode and Lsodar so we can compare the cost for Jacobian evaluations to function evaluations. We have (in Dymola) $747-585=162$ function evaluations more for Lsodar than CVode. This is compensated by 10 Jacobian evaluations, so we can assume that a Jacobian evaluation is about 16 times as costly as a normal function evaluation for this problem. Also the only conclusion we can draw about recommending an integrator for this problem is that Dopri45 is a bit slower than CVode and Lsodar and that Explicit Euler gives a really bad solution. Thus using either CVode or Lsodar seems reasonable.
+
+\section{Discussion}
+
 %WE DID THIS
 %H*R LÄG IN E NTABEL OM MED CAPTIONS TYP ALLA PARMATTERRA RO SÅNT
 
