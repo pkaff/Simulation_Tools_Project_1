@@ -1,0 +1,87 @@
+k = 10, x0 = 1.2, t = [0, 20], default tolerans etc.
+
+ODASSL:
+Endast för överbestämda system
+------------------------------------------------------------------------
+
+LSODAR:
+ Number of steps                       : 362
+ Number of function evaluations        : 747
+ Number of Jacobian evaluations        : 0
+ Number of state function evaluations  : 0
+ Number of state events                : 0
+
+Solver options:
+
+ Solver                  : LSODAR 
+ Absolute tolerances     : [  1.00000000e-06   1.00000000e-06   1.00000000e-06   1.00000000e-06]
+ Relative tolerances     : 1e-06
+ Starter                 : classical
+
+Simulation interval    : 0.0 - 20.0 seconds.
+Elapsed simulation time: 0.013006000000000073 seconds.
+------------------------------------------------------------------------
+
+ExplicitEuler:
+ Solver            : ExplicitEuler
+ Solver type       : fixed step size
+ Step size         : 0.01
+
+Simulation interval    : 0.0 - 20.0 seconds.
+Elapsed simulation time: 0.027005999999999974 seconds.
+------------------------------------------------------------------------
+
+ImplicitEuler:
+ Number of steps                                 : 2000
+ Number of function evaluations                  : 7439
+ Number of Jacobian evaluations                  : 96
+ Number of function eval. due to Jacobian eval.  : 480
+ Number of nonlinear iterations                  : 5439
+
+Solver options:
+
+ Solver            : ImplicitEuler
+ Solver type       : fixed step size
+ Step size         : 0.01
+
+Simulation interval    : 0.0 - 20.0 seconds.
+Elapsed simulation time: 0.31946299999999994 seconds.
+------------------------------------------------------------------------
+
+cvode:
+ Number of steps                                 : 536
+ Number of function evaluations                  : 580
+ Number of Jacobian evaluations                  : 9
+ Number of function eval. due to Jacobian eval.  : 36
+ Number of error test failures                   : 1
+ Number of nonlinear iterations                  : 576
+ Number of nonlinear convergence failures        : 0
+
+Solver options:
+
+ Solver                   : CVode
+ Linear multistep method  : BDF
+ Nonlinear solver         : Newton
+ Linear solver type       : DENSE
+ Maximal order            : 5
+ Tolerances (absolute)    : 1e-06
+ Tolerances (relative)    : 1e-06
+
+Simulation interval    : 0.0 - 20.0 seconds.
+Elapsed simulation time: 0.010006999999999988 seconds.
+------------------------------------------------------------------------
+
+Dopri5:
+ Number of steps                 : 201
+ Number of function evaluations  : 1208
+ Number of error test failures   : 0
+
+Solver options:
+
+ Solver                  : Dopri5 
+ Tolerances (absolute)   : 1e-06
+ Tolerances (relative)   : 1e-06
+
+Simulation interval    : 0.0 - 20.0 seconds.
+Elapsed simulation time: 0.011841999999999908 seconds.
+------------------------------------------------------------------------

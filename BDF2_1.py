@@ -10,8 +10,8 @@ class BDF_2(Explicit_ODE):
     """
 
     # order: 1 - Explicit Euler, 2 - BDF2, 3 - BDF3, 4 - BDF4
-    def __init__(self, rhs, y0, t0, order = 4, tol = 1.e-8, maxit = 100, maxsteps = 100000):
-        super().__init__(rhs, y0, t0)
+    def __init__(self, model, order = 4, tol = 1.e-6, maxit = 100, maxsteps = 100000):
+        super().__init__(model)
         self.method_order = order
         self.Tol = tol
         self.maxit = maxit
@@ -135,32 +135,8 @@ class BDF_2(Explicit_ODE):
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : BDF2',                       verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
-            
 
-'''#TEST EXAMPLE
-def pend(t,y):
-    #g=9.81    l=0.7134354980239037
-    gl=13.7503671
-    return N.array([y[1],-gl*N.sin(y[0])])
-
-#Initial conditions
-y0=N.array([0.5*N.pi,0.])    
-
-#Specify an explicit problem
-pend_mod=Explicit_Problem(pend, y0)
-pend_mod.name='Nonlinear Pendulum'
-
-#Define an explicit solver
-exp_sim = BDF_2(pend_mod) #Create a BDF solver
-
-#Simulate the problem
-t,y = exp_sim.simulate(1.0, 10)
-
-#Plot the result
-P.plot(t,y)
-P.show()'''
-
-def lambda_func(y1, y2, k = 20):
+def lambda_func(y1, y2, k = 10):
     return k*(N.sqrt(y1**2 + y2**2) - 1)/N.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -168,22 +144,18 @@ def rhs(t, y):
     return N.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
 
 #initial values. y[0] = x-position, y[1] = y-position, y[2] = x-velocity, y[3] = y-velocity
-y0 = N.array([1.4, 0.0, 0.0, 0.0])
+y0 = N.array([1.2, 0.0, 0.0, 0.0])
 t0 = 0.0
 
 #Assimulo stuff
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = BDF_2(model)
-sim.method_order = 4
+sim = BDF_2(model, 2)
 #sim.atol = 0.1
 #sim.rtol = 0.1
 #sim.maxord = 1
-#sim.maxh = 0.01
-#sim.minh = 0.01
-#sim = CVode(model)
-tfinal = 20
 #simulation. Store result in t and y
+tfinal = 20
 n_steps = 1000
 t, y = sim.simulate(tfinal, n_steps)
 

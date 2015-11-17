@@ -4,10 +4,15 @@ import pylab as pl
 import matplotlib.pyplot as plt
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
+from assimulo.solvers import ExplicitEuler
+from assimulo.solvers import ImplicitEuler
+from assimulo.solvers import LSODAR
+from assimulo.solvers import ODASSL
+from assimulo.solvers import Dopri5
 
 #lambda(y1, y2, k)
 
-def lambda_func(y1, y2, k = 50):
+def lambda_func(y1, y2, k = 10):
     return k*(np.sqrt(y1**2 + y2**2) - 1)/np.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -21,9 +26,9 @@ t0 = 0.0
 #Assimulo stuff
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = CVode(model)
-#sim.atol = 0.1
-sim.rtol = 0.1
+sim = Dopri5(model)
+#sim.atol = 1e-2
+#sim.rtol = 1e-2
 #sim.maxord = 1
 #sim.maxh = 0.2
 #sim.minh = 0.001
@@ -31,6 +36,9 @@ sim.rtol = 0.1
 #sim.discr = 'Adams'
 tfinal = 20
 #simulation. Store result in t and y
+#tcor, ycor = sim.simulate(tfinal)
+#sim.atol = 0.05
+#sim.rtol = 0.05
 t, y = sim.simulate(tfinal)
 
 #Create plots. Three figures are created: one containing positional values as a function of time, one with velocities as a function of time and the last traces the pendulum's movement (x and y coordinates in cartesian coordinate)
