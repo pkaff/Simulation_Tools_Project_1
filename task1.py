@@ -26,7 +26,7 @@ t0 = 0.0
 #Assimulo stuff
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = Dopri5(model)
+sim = CVode(model)
 #sim.atol = 1e-2
 #sim.rtol = 1e-2
 #sim.maxord = 1
@@ -62,4 +62,6 @@ legend = ax3.legend(loc='upper center', shadow=True)
 plt.grid()
 
 # Now add the legend with some customizations.
+sim.print_event_data()
+print("...")
 plt.show()

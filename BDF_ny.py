@@ -124,7 +124,7 @@ class BDF_2(Explicit_ODE):
         self.log_message(' Solver            : BDF2',                       verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
 
-def lambda_func(y1, y2, k = 10):
+def lambda_func(y1, y2, k = 100):
     return k*(N.sqrt(y1**2 + y2**2) - 1)/N.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -138,7 +138,7 @@ t0 = 0.0
 #Assimulo stuff
 model = Explicit_Problem(rhs, y0, t0)
 model.name = 'Task 1'
-sim = BDF_2(model, 1)
+sim = BDF_2(model, 2)
 #sim.atol = 0.1
 #sim.rtol = 0.1
 #sim.maxord = 1
