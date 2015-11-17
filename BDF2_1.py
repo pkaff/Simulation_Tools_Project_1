@@ -160,7 +160,7 @@ t,y = exp_sim.simulate(1.0, 10)
 P.plot(t,y)
 P.show()'''
 
-def lambda_func(y1, y2, k = 20):
+def lambda_func(y1, y2, k = 10):
     return k*(N.sqrt(y1**2 + y2**2) - 1)/N.sqrt(y1**2 + y2**2)
 
 #the right hand side of our problem
@@ -168,13 +168,13 @@ def rhs(t, y):
     return N.array([y[2], y[3], -y[0]*lambda_func(y[0], y[1]), -y[1]*lambda_func(y[0], y[1]) - 1])
 
 #initial values. y[0] = x-position, y[1] = y-position, y[2] = x-velocity, y[3] = y-velocity
-y0 = N.array([1.4, 0.0, 0.0, 0.0])
+y0 = N.array([1.2, 0.0, 0.0, 0.0])
 t0 = 0.0
 
 #Assimulo stuff
-model = Explicit_Problem(rhs, y0, t0)
+model = Explicit_Problem(rhs)
 model.name = 'Task 1'
-sim = BDF_2(model)
+sim = BDF_2(model, t0, y0)
 sim.method_order = 4
 #sim.atol = 0.1
 #sim.rtol = 0.1
